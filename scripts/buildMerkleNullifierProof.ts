@@ -12,6 +12,38 @@ function runCapture(cmd: string): string {
   return execSync(cmd).toString();
 }
 
+// Shared ptau path - reused across all circuits
+const PTAU_DIR = "build/ptau";
+const PTAU_FINAL = `${PTAU_DIR}/pot12_final.ptau`;
+
+/**
+ * Generate or reuse Powers of Tau ceremony artifacts.
+ * 
+ * ⚠️ PRODUCTION NOTE:
+ * - Do NOT generate ptau locally in production
+ * - Use a public ceremony artifact (e.g., Hermez, Polygon)
+ * - Or run your own multi-party ceremony
+ * - Store checksums/transcripts and verify before use
+ */
+function ensurePtau() {
+  fs.mkdirSync(PTAU_DIR, { recursive: true });
+  
+  if (fs.existsSync(PTAU_FINAL)) {
+    console.log("\n✅ Reusing existing ptau:", PTAU_FINAL);
+    return;
+  }
+
+  console.log("\n⚙️ Generating Powers of Tau (one-time setup)...");
+  run(`npx snarkjs powersoftau new bn128 12 ${PTAU_DIR}/pot12_0000.ptau -v`);
+  run(
+    `npx snarkjs powersoftau contribute ${PTAU_DIR}/pot12_0000.ptau ${PTAU_DIR}/pot12_0001.ptau --name='demo' -v`
+  );
+  run(
+    `npx snarkjs powersoftau prepare phase2 ${PTAU_DIR}/pot12_0001.ptau ${PTAU_FINAL} -v`
+  );
+  console.log("\n✅ Powers of Tau ceremony complete:", PTAU_FINAL);
+}
+
 async function main() {
   const depth = 4;
 
@@ -62,18 +94,12 @@ async function main() {
     "node build/merkleNullifier_js/generate_witness.cjs build/merkleNullifier_js/merkleNullifier.wasm build/input.json build/witness.wtns"
   );
 
-  // 6) Powers of Tau (reuse from module1 if you want; for now generate a new one)
-  run("npx snarkjs powersoftau new bn128 12 build/pot12_0000.ptau -v");
-  run(
-    "npx snarkjs powersoftau contribute build/pot12_0000.ptau build/pot12_0001.ptau --name='demo' -v"
-  );
-  run(
-    "npx snarkjs powersoftau prepare phase2 build/pot12_0001.ptau build/pot12_final.ptau -v"
-  );
+  // 6) Powers of Tau ceremony (cached - only runs once)
+  ensurePtau();
 
   // 7) Setup zkey
   run(
-    "npx snarkjs groth16 setup build/merkleNullifier.r1cs build/pot12_final.ptau build/mn_0000.zkey"
+    `npx snarkjs groth16 setup build/merkleNullifier.r1cs ${PTAU_FINAL} build/mn_0000.zkey`
   );
   run(
     "npx snarkjs zkey contribute build/mn_0000.zkey build/mn_final.zkey --name='demo2' -v"
