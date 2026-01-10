@@ -81,8 +81,8 @@ async function main() {
     "npx snarkjs generatecall build/public.json build/proof.json"
   );
 
-  fs.writeFileSync("build/calldata.txt", calldata);
-  console.log("\n✅ Calldata written to build/calldata.txt");
+  fs.writeFileSync("build/square_calldata.txt", calldata);
+  console.log("\n✅ Calldata written to build/square_calldata.txt");
 }
 
 main().catch((err) => {

@@ -15,12 +15,12 @@ function parseGenerateCallOutput(output: string) {
 
 describe("ZK Square Proof On-Chain Verification", function () {
   it("verifies Groth16 proof using generated Verifier.sol", async function () {
-    const raw = fs.readFileSync("build/calldata.txt", "utf8");
+    const raw = fs.readFileSync("build/square_calldata.txt", "utf8");
     const [a, b, c, input] = parseGenerateCallOutput(raw);
 
     const { viem } = await network.connect();
     const publicClient = await viem.getPublicClient();
-    const verifier = await viem.deployContract("Groth16Verifier");
+    const verifier = await viem.deployContract("contracts/Verifier.sol:Groth16Verifier");
 
     // viem’s auto-generated read helpers do not surface for this ABI; call via public client instead
     const ok = await publicClient.readContract({

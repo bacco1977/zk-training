@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "proof": "npx tsx scripts/buildProof.ts",
+    "m2:proof": "npx ts-node scripts/buildMerkleNullifierProof.ts",
     "test": "npx hardhat test"
   },
   "keywords": [],
@@ -14,11 +15,11 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-ignition": "^3.0.6",
     "@nomicfoundation/hardhat-toolbox-viem": "^5.0.1",
-    "@types/node": "^22.19.3",
     "@types/mocha": "^10.0.10",
-    "mocha": "^10.7.0",
+    "@types/node": "^22.19.3",
     "forge-std": "github:foundry-rs/forge-std#v1.9.4",
     "hardhat": "^3.1.2",
+    "mocha": "^10.7.0",
     "ts-node": "^10.9.2",
     "typescript": "~5.8.0",
     "viem": "^2.43.5"
@@ -29,6 +30,7 @@
     "ansi-regex": "^5.0.1",
     "chalk": "^5.6.2",
     "chokidar": "^4.0.3",
+    "circomlib": "^2.0.5",
     "circomlibjs": "^0.1.7",
     "debug": "^4.4.3",
     "enquirer": "^2.4.1",
