@@ -85,19 +85,181 @@ For example:
 
 ### Circuit Artifacts Provided
 
+**Square Circuit (Module 1):**
 - `build/proof.json`: Example Groth16 proof output for `x=7` in the `square.circom` circuit.
 - `build/public.json`: Public inputs corresponding to the proof.
-- `build/calldata.txt`: Pre-generated calldata to use with Solidity verifier contracts in your own scripts or tests.
+- `build/square_calldata.txt`: Pre-generated calldata for the square verifier.
+
+**Merkle Nullifier Circuit (Module 2):**
+- `build/mn_calldata.txt`: Pre-generated calldata for the merkle nullifier verifier.
+- `build/root.txt`: The Merkle tree root.
+- `build/nullifier.txt`: The generated nullifier for the test claim.
+- `build/context.txt`: The context used for nullifier derivation.
+
+**Shared:**
+- `build/ptau/pot12_final.ptau`: Cached Powers of Tau ceremony output (reused across circuits).
+
+---
+
+## Module 2: Merkle Tree Nullifier (Anonymous Claims)
+
+This project includes a more advanced ZK circuit demonstrating **anonymous membership proofs** with **anti-replay protection** - the foundation for privacy-preserving applications like anonymous airdrops, voting, and mixers.
+
+### What It Does
+
+The `MerkleNullifier` circuit proves:
+1. **"I know a secret whose hash is in a Merkle tree"** (membership proof)
+2. **"Here's a unique nullifier for this action"** (prevents double-claiming)
+
+All while keeping **which leaf you are** completely private!
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| `circuits/merkleNullifier.circom` | ZK circuit for Merkle membership + nullifier |
+| `scripts/buildMerkleNullifierProof.ts` | Build script for the circuit |
+| `scripts/poseidonMerkle.ts` | TypeScript utilities for Merkle tree operations |
+| `contracts/MerkleNullifierVerifier.sol` | Auto-generated Groth16 verifier |
+| `contracts/MerkleNullifierClaim.sol` | Claim contract with nullifier tracking |
+| `test/module2MerkleNullifier.ts` | Integration test |
+
+### Running the Example
+
+```bash
+# Build the proof (first run generates ptau, subsequent runs reuse it)
+npx tsx scripts/buildMerkleNullifierProof.ts
+
+# Run tests
+npm test
+```
+
+### How It Works
+
+```
+1. SETUP
+   - Build Merkle tree from user secrets: leaf = hash(secret)
+   - Publish tree root on-chain
+
+2. CLAIM (off-chain proof generation)
+   - User proves: "I know a secret in the tree"
+   - User reveals: nullifier = hash(secret, context)
+   - User hides: which leaf, the secret itself
+
+3. VERIFY (on-chain)
+   - Contract verifies ZK proof
+   - Contract checks: nullifier not used before
+   - Contract marks: nullifier as spent
+   - Contract sends: reward to user
+```
+
+---
+
+## ⚠️ Why This Is NOT Production-Ready
+
+This project is for **learning and experimentation only**. Here's what would need to change for production:
+
+### 1. Powers of Tau Ceremony
+
+**Current (training):**
+```typescript
+// Generated locally - YOU know the toxic waste!
+run("npx snarkjs powersoftau new bn128 12 ...");
+```
+
+**Production requirement:**
+- Use public ceremony artifacts (Hermez, Polygon)
+- Or run your own multi-party ceremony
+- Verify checksums before use
+
+```bash
+# Download trusted ceremony output
+wget https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_12.ptau
+```
+
+### 2. Privacy Limitations
+
+**Current limitation:** The recipient address (`msg.sender`) is visible on-chain.
+
+```
+Observer sees: "0xABC... received tokens"
+Observer doesn't see: "Which leaf in the tree was 0xABC..."
+```
+
+**For full privacy:**
+- Use a relayer network (Tornado Cash pattern)
+- Withdraw to fresh addresses with no transaction history
+- Use account abstraction with paymasters
+
+### 3. No Actual Reward
+
+**Current:** The claim function just emits an event.
+
+```solidity
+// TODO: Add actual token transfer
+emit Claimed(nullifier, msg.sender);
+// payable(msg.sender).transfer(amount); // Not implemented!
+```
+
+**Production:** Add ERC20/ETH transfer or NFT minting.
+
+### 4. Hardcoded Parameters
+
+**Current:** Tree depth, context, secrets are hardcoded.
+
+```typescript
+const depth = 4;  // Fixed
+const context = 12345n;  // Fixed
+const secrets = [11n, 22n, 33n, 44n];  // Fixed
+```
+
+**Production:**
+- Dynamic tree building from user registrations
+- Context derived from chain ID + contract address
+- Secure secret generation and storage
+
+### 5. No Input Validation
+
+**Current:** Minimal validation in contracts.
+
+**Production:**
+- Validate all public signal ranges
+- Add reentrancy guards
+- Comprehensive access control
+- Audit by security professionals
+
+### 6. Circuit Not Audited
+
+ZK circuits require specialized audits:
+- Constraint completeness
+- No under-constrained signals
+- Sound constraint logic
+
+---
+
+## Production Checklist
+
+Before deploying ZK systems with real value:
+
+- [ ] Use public ceremony ptau (Hermez/Polygon)
+- [ ] Implement relayer for full privacy
+- [ ] Add actual token/ETH rewards
+- [ ] Dynamic tree management
+- [ ] Comprehensive input validation
+- [ ] Smart contract audit
+- [ ] ZK circuit audit
+- [ ] Bug bounty program
 
 ---
 
 **This project thus serves as a minimal, reproducible template showing how to:**
 
 - Write ZK circuits with Circom
+- Build Merkle tree membership proofs
+- Implement nullifiers for anti-replay protection
 - Compile, generate proofs, and verify off-chain
 - Export Solidity verifiers in an automated fashion
 - Integrate ZK verification into a Hardhat/TypeScript/Node.js workflow
 
 _You can use this project as a starting point to integrate ZK-SNARK verification in your own contracts and TypeScript-based tests._
-
 
