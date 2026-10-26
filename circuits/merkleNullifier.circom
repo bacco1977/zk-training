@@ -22,6 +22,8 @@ template MerkleProof(depth) {
     cur[0] <== leaf;
 
     for (var i = 0; i < depth; i++) {
+        // A direction is a bit, not an arbitrary field element.
+        pathIndices[i] * (pathIndices[i] - 1) === 0;
         hashers[i] = Poseidon(2);
 
         // Conditional swap using quadratic constraints:

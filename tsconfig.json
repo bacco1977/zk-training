@@ -1,7 +1,8 @@
-/* Based on https://github.com/tsconfig/bases/blob/501da2bcd640cf95c95805783e1012b992338f28/bases/node22.json */
 {
   "compilerOptions": {
-    "lib": ["es2023"],
+    "lib": [
+      "es2023"
+    ],
     "module": "node16",
     "target": "es2022",
     "strict": true,
@@ -9,20 +10,13 @@
     "skipLibCheck": true,
     "moduleResolution": "node16",
     "outDir": "dist",
-    "types": ["node", "hardhat", "@nomicfoundation/hardhat-toolbox-viem", "mocha"]
-  }
-,
-"eslintConfig": {
-  "env": {
-    "es2022": true,
-    "node": true
+    "types": [
+      "node"
+    ]
   },
-  "extends": [
-    "eslint:recommended"
-  ],
-  "parserOptions": {
-    "ecmaVersion": 2022,
-    "sourceType": "module"
-  }
-}
+  "exclude": [
+    "node_modules",
+    "build",
+    "cache"
+  ]
 }

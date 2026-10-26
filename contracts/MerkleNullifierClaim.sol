@@ -14,13 +14,15 @@ contract MerkleNullifierClaim {
     IMerkleNullifierVerifier public verifier;
 
     uint256 public merkleRoot;
+    uint256 public immutable claimContext;
     mapping(uint256 => bool) public nullifierUsed;
 
     event Claimed(uint256 nullifier, address claimer);
 
-    constructor(address _verifier, uint256 _root) {
+    constructor(address _verifier, uint256 _root, uint256 _context) {
         verifier = IMerkleNullifierVerifier(_verifier);
         merkleRoot = _root;
+        claimContext = _context;
     }
 
     function claim(
@@ -36,6 +38,7 @@ contract MerkleNullifierClaim {
         uint256 rootExpected = input[1];
 
         require(rootExpected == merkleRoot, "Wrong root");
+        require(input[2] == claimContext, "Wrong context");
         require(!nullifierUsed[nullifier], "Nullifier already used");
 
         nullifierUsed[nullifier] = true;
